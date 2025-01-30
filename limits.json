@@ -1,11 +1,16 @@
 {
-    "user1": {
+    "377217614520385536": {
         "date": "30/01/2025",
         "counts": {
-            "items": 1,
+            "items": 2,
+            "curiosities": -1
+        }
+    },
+    "426068269816872982": {
+        "date": "30/01/2025",
+        "counts": {
+            "items": 2,
             "curiosities": 1
-        },
-        "items": ["Um item muito foda"],
-        "curiosities": []
+        }
     }
 }
