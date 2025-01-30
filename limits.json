@@ -1,0 +1,11 @@
+{
+    "user1": {
+        "date": "30/01/2025",
+        "counts": {
+            "items": 1,
+            "curiosities": 1
+        },
+        "items": ["Um item muito foda"],
+        "curiosities": []
+    }
+}
