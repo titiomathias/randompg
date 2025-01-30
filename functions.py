@@ -23,7 +23,7 @@ def return_sp():
     return curiosity
 
 
-# Still in development
+# Define limits for users
 def check_limit(user_id, command_name):
     today = datetime.now().strftime("%d/%m/%Y")
 
