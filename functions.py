@@ -12,10 +12,9 @@ def return_gp():
         file.close()
     return item
 
-
-# Return random curiosity (still in development)
+# Return random curiosity
 def return_sp():
-    sp = randint(1, 100)
+    sp = randint(1, 101)
 
     with open('d100.csv', 'r', encoding='utf-8') as file:
         lines = file.readlines()
@@ -26,22 +25,46 @@ def return_sp():
 
 # Still in development
 def check_limit(user_id, command_name):
-    today = datetime.now().date()
+    today = datetime.now().strftime("%d/%m/%Y")
 
-    users = json.load(open('limits.json', 'r', encoding='utf-8'))
+    try:
+        users = json.load(open('limits.json', 'r', encoding='utf-8'))
+        
+        for user in users:
+            if users[user]["date"] != today:
+                users[user]["date"] = today
+                users[user]["counts"]["items"] = 0
+                users[user]["counts"]["curiosities"] = 0
+            else:
+                continue
+    except Exception as e:
+        print(e)
 
     if user_id not in users:
+
         users[user_id] = {
             "date": today,
             "counts": {
                 "items": 0,
                 "curiosities": 0
-            },
-            "items": [],
-            "curiosities": []
+            }
         }
 
-    print(users[user_id])
+        users[user_id]["counts"][command_name] += 1
 
+        with open('limits.json', 'w', encoding='utf-8') as file:
+            json.dump(users, file, indent=4, ensure_ascii=False)
+            file.close()
 
-check_limit("user1", "item")
+        return True
+    else:
+        if users[user_id]["counts"][command_name] < 2:
+            users[user_id]["counts"][command_name] += 1
+
+            with open('limits.json', 'w', encoding='utf-8') as file:
+                json.dump(users, file, indent=4, ensure_ascii=False)
+                file.close()
+            
+            return True
+        else:
+            return False
