@@ -6,13 +6,13 @@ from functions import *
 intents = discord.Intents.default()
 intents.message_content = True
 
-client = commands.Bot(command_prefix='!', intents=intents)
+client = commands.Bot(command_prefix='!', intents=intents, help_command=None)
 
 @client.event
 async def on_ready():
     print('Bot is working.')
 
-@client.command()
+@client.command(name='ola')
 async def ola(ctx):
     await ctx.send('Olá, caro cliente! Estou pronto para uso. Caso queira entender meu funcionamento, utilize o comando "!ajuda".')
 
@@ -20,15 +20,15 @@ async def ola(ctx):
 async def segredo(ctx):
     await ctx.send('Bot segredinho. Shhhhh! -_-')
 
-@client.command()
+@client.command(name='ajuda', aliases=['help'])
 async def ajuda(ctx):
-    await ctx.send('**Olá! Eu sou o Random. Vou te explicar o que sou e como você pode me usar.**\n\nVeja bem, eu sou um bot que gera itens aleatórios para você usar em suas aventuras de RPG. Para isso, basta digitar o comando **!item** e eu vou te dar um item aleatório. Simples assim! Espero que você goste e se divirta com os itens que eu vou te dar. Boa sorte!\n\nQuer uma curiosidade aleatória? Use o comando **!curiosidade** e eu vou te contar algo que você talvez não saiba. Divirta-se!')
+    await ctx.send('**Olá! Eu sou o Random. Vou te explicar o que sou e como você pode me usar.**\n\nVeja bem, eu sou um bot que gera itens aleatórios para você usar em suas aventuras de RPG. Para isso, basta digitar o comando **!item** e eu vou te dar um item aleatório. Simples assim! Espero que você goste e se divirta com os itens que eu vou te dar. Boa sorte!\n\nQuer uma curiosidade aleatória? Use o comando **!curiosidade** e eu vou te contar algo que você talvez não saiba. Divirta-se!\n\n*Para ver todos os meus comandos disponíveis, utilize* **!comandos**.')
 
-@client.command()
+@client.command(name='comandos')
 async def comandos(ctx):
     await ctx.send('**Olá! Eu sou o Random.** Aqui está minha lista de comandos:\n\n**!ola** - Me cumprimenta.\n**!ajuda** ou **!help** - Explica o que eu sou e como você pode me usar.\n**!comandos** - Mostra a lista de comandos disponíveis.\n**!item** - Gera um item aleatório para você.\n**!curiosidade** - Conta uma curiosidade aleatória para você.\n\n**Espero que você se divirta com meus comandos!**')
 
-@client.command()
+@client.command(name='item')
 async def item(ctx):
     user_id = str(ctx.author.id)
     if check_limit(user_id, "items"):
@@ -37,7 +37,7 @@ async def item(ctx):
     else:
         await ctx.send('Você já pegou muitos itens hoje. Volte amanhã!')
 
-@client.command()
+@client.command(name='curiosidade')
 async def curiosidade(ctx):
     user_id = str(ctx.author.id)
     if check_limit(user_id, "curiosities"):
