@@ -1,12 +1,12 @@
 {
-    "377217614520385536": {
+    "user1": {
         "date": "30/01/2025",
         "counts": {
             "items": 2,
-            "curiosities": -1
+            "curiosities": 1
         }
     },
-    "426068269816872982": {
+    "user2": {
         "date": "30/01/2025",
         "counts": {
             "items": 2,
