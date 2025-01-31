@@ -4,17 +4,19 @@ import json
 
 # Return random item
 def return_gp():
-    gp = randint(1, 1001)
+    gp = randint(0, 999)
 
     with open('d1000.csv', 'r', encoding='utf-8') as file:
         lines = file.readlines()
+        print(lines[0])
+        print(lines[999])
         item = lines[gp].strip("\n")
         file.close()
     return item
 
 # Return random curiosity
 def return_sp():
-    sp = randint(1, 101)
+    sp = randint(0, 99)
 
     with open('d100.csv', 'r', encoding='utf-8') as file:
         lines = file.readlines()
