@@ -16,7 +16,7 @@ async def on_ready():
 
 
 # Sending hello
-@client.command(name='ola')
+@client.command(name='ola', aliases=['hello'])
 async def ola(ctx):
     await ctx.send('Olá, caro cliente! Estou pronto para uso. Caso queira entender meu funcionamento, utilize o comando "!ajuda".')
 
@@ -34,13 +34,13 @@ async def ajuda(ctx):
 
 
 #command list
-@client.command(name='comandos')
+@client.command(name='comandos', aliases=['commands'])
 async def comandos(ctx):
     await ctx.send('**Olá! Eu sou o Random.** Aqui está minha lista de comandos:\n\n**!ola** - Me cumprimenta.\n**!ajuda** ou **!help** - Explica o que eu sou e como você pode me usar.\n**!comandos** - Mostra a lista de comandos disponíveis.\n**!item** - Gera um item aleatório para você.\n**!curiosidade** - Conta uma curiosidade aleatória para você.\n**!abrirmochila** - Lista os itens na mochila do usuário\n**!descartar [numero]** - Descarta um item da sua mochila de acordo com seu índice. Exemplo: !descartar 1\n\n**Espero que você se divirta com meus comandos!**')
 
 
 # Open Bag
-@client.command(name='abrirmochila')
+@client.command(name='abrirmochila', aliases=['mochila'])
 async def abrirmochila(ctx):
     user_id = str(ctx.author.id)
     try:
