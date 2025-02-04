@@ -2,6 +2,19 @@ from random import randint
 from datetime import datetime
 import json
 
+# Get name item
+def name_item_user(user_id, i):
+    try:
+        users = json.load(open('limits.json', 'r', encoding='utf-8'))
+    except Exception as e:
+        print(e)
+
+    if user_id in users:
+        name_item = users[user_id]["bag"][i-1]
+
+        return name_item
+    
+
 # Return random item
 def return_gp():
     gp = randint(0, 999)
@@ -95,3 +108,21 @@ def check_limit(user_id, command_name):
             return 1
         else:
             return 0
+
+
+def swap_items(user_id_1: str, item1: int, user_id_2: str, item2: int):
+    try:
+        users = json.load(open('limits.json', 'r', encoding='utf-8'))
+    except Exception as e:
+        print(e)
+
+    item_1 = users[user_id_1]["bag"][item1]
+
+    users[user_id_1]["bag"][item1] = users[user_id_2]["bag"][item2]
+    users[user_id_2]["bag"][item2] = item_1
+
+    with open('limits.json', 'w', encoding='utf-8') as file:
+        json.dump(users, file, indent=4, ensure_ascii=False)
+        file.close()
+
+    return True

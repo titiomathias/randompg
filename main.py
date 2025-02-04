@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from mykey import mykey
 from functions import *
-
+from tickets import *
 intents = discord.Intents.default()
 intents.message_content = True
 
@@ -30,13 +30,13 @@ async def segredo(ctx):
 # help command
 @client.command(name='ajuda', aliases=['help'])
 async def ajuda(ctx):
-    await ctx.send('**Olá! Eu sou o Random. Vou te explicar o que sou e como você pode me usar.**\n\nVeja bem, eu sou um bot que gera itens aleatórios para você usar em suas aventuras de RPG. Para isso, basta digitar o comando **!item** e eu vou te dar um item aleatório.\n\nSeus itens serão guardados na sua mochila automaticamente (você pode guardar até 10 itens e pode acessar a sua mochila através do comando **!abrirmochila**, depois disso, você terá que **!descartar** ou trocar itens com outros jogadores).\n\nEspero que você goste e se divirta com os itens que eu vou te dar. Boa sorte!\n\nQuer uma curiosidade aleatória? Use o comando **!curiosidade** e eu vou te contar algo que você talvez não saiba. Divirta-se!\n\n*Para ver todos os meus comandos disponíveis, utilize* **!comandos**.')
+    await ctx.send('**Olá! Eu sou o Random. Vou te explicar o que sou e como você pode me usar.**\n\nVeja bem, eu sou um bot que gera itens aleatórios para você usar em suas aventuras de RPG. Para isso, basta digitar o comando **!item** e eu vou te dar um item aleatório.\n\nSeus itens serão guardados na sua mochila automaticamente (você pode guardar até 10 itens e pode acessar a sua mochila através do comando **!abrirmochila**, depois disso, você terá que **!descartar** ou **!trocar** itens com outros jogadores).\n\nEspero que você goste e se divirta com os itens que eu vou te dar. Boa sorte!\n\nQuer uma curiosidade aleatória? Use o comando **!curiosidade** e eu vou te contar algo que você talvez não saiba. Divirta-se!\n\n*Para ver todos os meus comandos disponíveis, utilize* **!comandos**.')
 
 
 #command list
 @client.command(name='comandos', aliases=['commands'])
 async def comandos(ctx):
-    await ctx.send('**Olá! Eu sou o Random.** Aqui está minha lista de comandos:\n\n**!ola** - Me cumprimenta.\n**!ajuda** ou **!help** - Explica o que eu sou e como você pode me usar.\n**!comandos** - Mostra a lista de comandos disponíveis.\n**!item** - Gera um item aleatório para você.\n**!curiosidade** - Conta uma curiosidade aleatória para você.\n**!abrirmochila** - Lista os itens na mochila do usuário\n**!descartar [numero]** - Descarta um item da sua mochila de acordo com seu índice. Exemplo: !descartar 1\n\n**Espero que você se divirta com meus comandos!**')
+    await ctx.send('**Olá! Eu sou o Random.** Aqui está minha lista de comandos:\n\n**!ola** - Me cumprimenta.\n**!ajuda** ou **!help** - Explica o que eu sou e como você pode me usar.\n**!comandos** - Mostra a lista de comandos disponíveis.\n**!item** - Gera um item aleatório para você.\n**!curiosidade** - Conta uma curiosidade aleatória para você.\n**!mochila** - Lista os itens na mochila do usuário\n**!descartar [numero]** - Descarta um item da sua mochila de acordo com seu índice. Exemplo: !descartar 1\n**!troca [numero] @usuario [numero]** - Troca um item de sua mochila com o de outro usuário. Exemplo: !troca 1 @fulano 2 (esse comando solicita uma troca do seu item número 1 pelo item número 2 do usuário mencionado)\n\n**Espero que você se divirta com meus comandos!**')
 
 
 # Open Bag
@@ -116,5 +116,144 @@ async def curiosidade(ctx):
     else:
         await ctx.send('Você já sabe coisas demais. Volte amanhã!')
 
+
+# Exchange items
+@client.command(name="troca", aliases=["trocar"])
+async def troca(ctx, item1: int, usuario: discord.Member, item2: int):
+    try:
+        users = json.load(open('limits.json', 'r', encoding='utf-8'))
+    except Exception as e:
+        print(e)
+
+    solicitante = ctx.author
+    mencionado = usuario
+    solicitante_id = str(solicitante.id)
+    mencionado_id = str(mencionado.id)
+
+    nameitem1 = name_item_user(solicitante_id, item1)
+    nameitem2 = name_item_user(mencionado_id, item2)
+
+    if nameitem1 not in users[solicitante_id]["bag"]:
+        await ctx.send(f"❌ {solicitante.mention}, você não possui o item `{item1}`.")
+        return
+
+    if nameitem2 not in users[mencionado_id]["bag"]:
+        await ctx.send(f"❌ {mencionado.mention}, ele não possui o item `{item2}`.")
+        return
+    
+
+    # Creating a exchange ticket
+
+    ticket_id = str(len(load_tickets()) + 1)
+
+    ticket = {
+        "date": datetime.now().strftime("%d/%m/%Y"),
+        "type": 0, 
+        "user_id": solicitante_id,
+        "item": nameitem1,
+        "purpose": nameitem2,
+        "user_id_request": mencionado_id,
+        "result": "",
+        "status": 1  # Status 1: Open - Status 0: Closed
+    }
+
+    tickets = load_tickets()
+    tickets[ticket_id] = ticket
+    save_tickets(tickets)
+
+    name_item1 = name_item_user(str(solicitante.id), item1)
+    name_item2 = name_item_user(str(mencionado.id), item2)
+
+    mensagem = (
+        f"🔄 {mencionado.mention}, {solicitante.mention} quer trocar um item com você!\n"
+        f"📌 Ele quer trocar o item `{nameitem1}` pelo seu item `{nameitem2}`.\n"
+        f"✉ Para aceitar, digite `!aceito {ticket_id}` ou `!recuso {ticket_id}`."
+    )
+
+    await ctx.send(mensagem)
+
+
+@client.command(name="aceito")
+async def aceito(ctx, ticket_id: str):
+    try:
+        users = json.load(open('limits.json', 'r', encoding='utf-8'))
+    except Exception as e:
+        print(e)
+
+    tickets = load_tickets()
+
+    if ticket_id not in tickets:
+        await ctx.send("❌ Ticket não encontrado.")
+        return
+
+    ticket = tickets[ticket_id]
+
+    if str(ctx.author.id) != ticket["user_id_request"]:
+        await ctx.send("🚫 Você não pode aceitar esta troca, pois não é o destinatário.")
+        return
+
+    item1 = ticket["item"]
+    solicitante_id = ticket["user_id"]
+    mencionado_id = ticket["user_id_request"] 
+    item2 = ticket["purpose"]
+
+    if item1 not in users[solicitante_id]["bag"]:
+        await ctx.send(f"❌ O item `{item1}` não está mais no inventário de {ctx.author.mention}. Troca cancelada.")
+        return
+    
+    if item2 not in users[mencionado_id]["bag"]:
+        await ctx.send(f"❌ O item `{item2}` não está mais no inventário de {ctx.author.mention}. Troca cancelada.")
+        return
+    
+    index_item1 = users[solicitante_id]["bag"].index(item1)
+    index_item2 = users[mencionado_id]["bag"].index(item2)
+    
+    swap_items(solicitante_id, index_item1, mencionado_id, index_item2)
+
+    ticket["result"] = "Aceito"
+    ticket["status"] = 0
+    save_tickets(tickets)
+
+    solicitante = await client.fetch_user(int(solicitante_id))
+    mencionado = ctx.author
+
+    mensagem = (
+        f"✅ {mencionado.mention} aceitou a troca!\n"
+        f"🔄 {solicitante.mention}, sua troca do item `{ticket['item']}` pelo `{ticket['purpose']}` foi aceita!"
+    )
+
+    await ctx.send(mensagem)
+
+
+@client.command(name="recuso")
+async def recuso(ctx, ticket_id: str):
+    tickets = load_tickets()
+
+    if ticket_id not in tickets:
+        await ctx.send("❌ Ticket não encontrado.")
+        return
+
+    ticket = tickets[ticket_id]
+
+    # Verificar se o usuário tem permissão para recusar a troca
+    if str(ctx.author.id) != ticket["user_id_request"]:
+        await ctx.send("🚫 Você não pode recusar esta troca, pois não é o destinatário.")
+        return
+
+    # Atualizar status do ticket
+    ticket["result"] = "Recusado"
+    ticket["status"] = 0  # Ticket fechado
+    save_tickets(tickets)
+
+    # Notificar os envolvidos
+    solicitante = await client.fetch_user(int(ticket["user_id"]))
+    mencionado = ctx.author
+
+    mensagem = (
+        f"❌ {mencionado.mention} recusou a troca.\n"
+        f"🔄 {solicitante.mention}, sua solicitação para trocar `{ticket['item']}` pelo `{ticket['purpose']}` foi recusada."
+    )
+
+    await ctx.send(mensagem)
 
 client.run(mykey)
