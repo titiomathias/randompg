@@ -42,6 +42,7 @@ async def comandos(ctx):
 # Open Bag
 @client.command(name='abrirmochila', aliases=['mochila'])
 async def abrirmochila(ctx):
+
     user_id = str(ctx.author.id)
     try:
         users = json.load(open('limits.json', 'r', encoding='utf-8'))
@@ -165,10 +166,37 @@ async def troca(ctx, item1: int, usuario: discord.Member, item2: int):
     name_item2 = name_item_user(str(mencionado.id), item2)
 
     mensagem = (
-        f"🔄 {mencionado.mention}, {solicitante.mention} quer trocar um item com você!\n"
+        f"🔄 {mencionado.mention}, {solicitante.mention} quer trocar um item com você! `ID de troca: {ticket_id}`\n"
         f"📌 Ele quer trocar o item `{nameitem1}` pelo seu item `{nameitem2}`.\n"
-        f"✉ Para aceitar, digite `!aceito {ticket_id}` ou `!recuso {ticket_id}`."
+        f"✉ Para aceitar, digite `!aceito {ticket_id}` ou `!recuso {ticket_id}`.\n"
+        f"❌ Se mudou de ideia e quer cancelar a troca, digite `!cancelar {ticket_id}`."
     )
+
+    await ctx.send(mensagem)
+
+
+@client.command(name="cancelar", aliases=["cancela", "cancelartroca"])
+async def cancelar(ctx, ticket_id: str):
+    tickets = load_tickets()
+
+    ticket = tickets[ticket_id]
+
+    if str(ctx.author.id) != ticket["user_id"]:
+        await ctx.send("🚫 Você não pode cancelar esta troca, pois não é o solicitante.")
+        return
+    
+    if ticket["status"] == 1 and ticket["result"] == "":    
+        ticket["result"] = "Cancelado"
+        ticket["status"] = 0
+        save_tickets(tickets)
+
+        mensagem = (
+            f" {ctx.author.mention} cancelou a troca!\n"
+        )
+    else:
+        mensagem = (
+            f"❌ {ctx.author.mention} a troca em questão já foi finalizada!\n"
+        )
 
     await ctx.send(mensagem)
 
