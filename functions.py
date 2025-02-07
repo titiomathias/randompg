@@ -55,6 +55,39 @@ def add_item(user_id, item):
     else:
         return False
 
+
+# Vip client for paymant or Jackpot
+def inexpirable(user_id, credits):
+    today = datetime.now().strftime("%d/%m/%Y")
+
+    try:
+        users = json.load(open('limits.json', 'r', encoding='utf-8'))
+    except Exception as e:
+        print(e)
+        return
+
+    if not user_id in users:
+        users[user_id] = {
+            "date": today,
+            "counts": {
+                "items": 0,
+                "curiosities": 0
+            },
+            "bag": []
+        }
+    
+    if not "items-vip" in users[user_id]["counts"]:
+        users[user_id]["counts"]["items-vip"] = 0
+    
+    users[user_id]["counts"]["items-vip"] += credits
+
+    with open('limits.json', 'w', encoding='utf-8') as file:
+        json.dump(users, file, indent=4, ensure_ascii=False)
+        file.close()
+
+    return True
+
+
 # Define limits for users
 def check_limit(user_id, command_name):
     today = datetime.now().strftime("%d/%m/%Y")
@@ -89,7 +122,7 @@ def check_limit(user_id, command_name):
             json.dump(users, file, indent=4, ensure_ascii=False)
             file.close()
 
-        return 1
+        return 0
     else:
         if users[user_id]["counts"][command_name] < 2:
 
@@ -97,7 +130,7 @@ def check_limit(user_id, command_name):
                 if len(users[user_id]["bag"]) < 10:
                     users[user_id]["counts"]["items"] += 1
                 else:
-                    return -1
+                    return -2
             else:
                 users[user_id]["counts"]["curiosities"] += 1
 
@@ -105,9 +138,23 @@ def check_limit(user_id, command_name):
                 json.dump(users, file, indent=4, ensure_ascii=False)
                 file.close()
             
-            return 1
-        else:
             return 0
+        else:
+            try:
+                if command_name == "items" and users[user_id]["counts"]["items-vip"] > 0:
+                    users[user_id]["counts"]["items-vip"] -= 1
+                    po = users[user_id]["counts"]["items-vip"]
+
+                    with open('limits.json', 'w', encoding='utf-8') as file:
+                        json.dump(users, file, indent=4, ensure_ascii=False)
+                        file.close()
+
+                    return po
+                else:
+                    return -1
+            except:
+                return -1
+            
 
 
 def swap_items(user_id_1: str, item1: int, user_id_2: str, item2: int):
