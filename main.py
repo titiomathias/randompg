@@ -3,6 +3,9 @@ from discord.ext import commands
 from mykey import mykey
 from functions import *
 from tickets import *
+from database import crud
+
+
 intents = discord.Intents.default()
 intents.message_content = True
 
@@ -22,7 +25,7 @@ async def ola(ctx):
 
 
 # Sending secret message
-@client.command()
+@client.command(name='segredo', aliases=['segredinho', 'secret'])
 async def segredo(ctx):
     await ctx.send('Bot segredinho. Shhhhh! -_-')
 
@@ -40,84 +43,54 @@ async def comandos(ctx):
 
 
 # Open Bag
-@client.command(name='abrirmochila', aliases=['mochila'])
+@client.command(name='abrirmochila', aliases=['mochila', 'bag', 'openbag'])
 async def abrirmochila(ctx):
 
-    user_id = str(ctx.author.id)
-    try:
-        users = json.load(open('limits.json', 'r', encoding='utf-8'))
-    except Exception as e:
-        print(e)
+    user_id = ctx.author.id
+    
+    bag = crud.open_bag(user_id)
 
-    if user_id in users:
-        bag = users[user_id]["bag"]
-        if len(bag) > 0:
-            bag_str = 'Seus itens:\n\n'
-            for item in bag:
-                n = bag.index(item) + 1
-                bag_str += f'**{n} ->** {item}\n'
-            await ctx.send(bag_str)
-        else:
-            await ctx.send('Sua mochila está vazia! Use o comando **!item** para pegar itens.')
+    if len(bag) > 0:
+        bag_str = 'Seus itens:\n\n'
+        for item in bag:
+            n = bag.index(item) + 1
+            bag_str += f'**{n} ->** {item}\n'
+        await ctx.send(bag_str)
     else:
         await ctx.send('Sua mochila está vazia! Use o comando **!item** para pegar itens.')
 
 
 # Remove Item
-@client.command(name='descartar')
+@client.command(name='descartar', aliases=['remover', 'lixeira', 'jogarfora'])
 async def descartar(ctx, i: int):
-    user_id = str(ctx.author.id)
-    try:
-        users = json.load(open('limits.json', 'r', encoding='utf-8'))
-    except Exception as e:
-        print(e)
+    user_id = ctx.author.id
 
-    if user_id in users:
-        bag = users[user_id]["bag"]
-        if len(bag) > 0:
-            if i > 0 and i <= len(bag):
-                item = bag[i - 1]
-                bag.remove(item)
-                users[user_id]["bag"] = bag
-                with open('limits.json', 'w', encoding='utf-8') as file:
-                    json.dump(users, file, indent=4, ensure_ascii=False)
-                    file.close()
-                await ctx.send(f'Você descartou o item **{item}**.')
-            else:
-                await ctx.send('Escolha um número válido para descartar.')
-        else:
-            await ctx.send('Sua mochila está vazia! Use o comando **!item** para pegar itens.')
-    else:
-        await ctx.send('Sua mochila está vazia! Use o comando **!item** para pegar itens.')
+    message = crud.remove_item(i, user_id)
+
+    await ctx.send(message)
 
 
 # Random Item
 @client.command(name='item')
 async def item(ctx):
-    user_id = str(ctx.author.id)
+    user_id = ctx.author.id
 
-    limit = check_limit(user_id, "items")
+    item = crud.return_free_item(user_id)
 
-    if limit >= 0:
-        item = return_gp()
-
-        message_vip = ""
-
-        if limit > 0:
-            message_vip += f"\n\n**Essa tentativa foi feita através de seus créditos inexpiráveis!** Há **{limit}** crédito(s) restante(s)."
-
+    if item == 0:
+        await ctx.send('Você já pegou muitos itens hoje. Volte amanhã!')
+    elif item == -1:
+        await ctx.send('Sua mochila está cheia! Descarte ou troque itens para pegar mais. **!ajuda** para mais informações.')
+    else:
         if "Jackpot!" in item:
-            inexpirable(user_id, 100)
-            await ctx.send(f'**💰 Ding ding ding! Olha só quem ganhou!?:**\n\n**->** {item}\n\nTentativas inexpiráveis permitem que você tire vários itens sem a limitação de dois itens por dia!')
+            crud.jackpot(user_id)
+            await ctx.send(f'**💰 Ding ding ding! TEMOS UM VENCEDOR!?:**\n\n**->** {item}\n\nCréditos permitem que você tire vários itens sem a limitação de dois itens por dia!')
         else:
-            if add_item(user_id, item):
+            if crud.add_item(item, user_id):
                 await ctx.send(f'**Ding ding ding! Você ganhou o item a seguir:**\n\n**->** {item}\n\nUse o comando **!abrirmochila** para ver seus itens!{message_vip}')
             else:
                 await ctx.send('Algo deu errado ao guardar seu item! Tente novamente.')
-    elif limit == -1:
-        await ctx.send('Você já pegou muitos itens hoje. Volte amanhã!')
-    else:
-        await ctx.send('Sua mochila está cheia! Descarte ou troque itens para pegar mais. **!ajuda** para mais informações.')
+
 
 
 # Random Curiosity

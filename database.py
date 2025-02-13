@@ -75,7 +75,7 @@ for user_id, info in dados.items():
         credits = info["counts"]["items_vip"]
     except:
         credits = 0
-    bag = json.dumps(info["bag"])
+    bag = json.dumps(info["bag"], ensure_ascii=False)
 
     cursor.execute('''
     INSERT INTO users (user_id, date, items_free, curiosities_free, credits, bag) VALUES (?, ?, ?, ?, ?, ?)
