@@ -396,7 +396,29 @@ def check_credits(user_id):
     user = cursor.fetchone()
 
     if user:
-        return user[3]
+        data_atual = datetime.now().date()
+        
+        try:
+            data = datetime.strptime(user[0][1], '%Y-%m-%d').date()
+        except ValueError:
+            try:
+                data = datetime.strptime(user[0][1], '%d/%m/%Y').date()
+            except ValueError as e:
+                print(f"Erro ao converter data: {e}")
+                return -1
+
+        diferenca_dias = (data_atual - data).days
+
+        if diferenca_dias > 0:
+            query = '''
+            UPDATE users SET date = ?, credits = credits + ?, curiosities_free = 2 WHERE user_id = ?
+            '''
+            cursor.execute(query, (data_atual.strftime('%Y-%m-%d'), diferenca_dias, user_id))
+            conn.commit()
+
+            return check_credits(user_id)
+        else:    
+            return user[3]
     else:
         add_user(user_id, str(datetime.now().strftime("%d/%m/%Y")))
         return check_credits(user_id)
