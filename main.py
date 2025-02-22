@@ -1,10 +1,7 @@
 import discord
 from discord.ext import commands
 from mykey import mykey
-from functions import *
-from tickets import *
 from database import crud
-
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -33,13 +30,13 @@ async def segredo(ctx):
 # help command
 @client.command(name='ajuda', aliases=['help'])
 async def ajuda(ctx):
-    await ctx.send('**Olá! Eu sou o Random. Vou te explicar o que sou e como você pode me usar.**\n\nVeja bem, eu sou um bot que gera itens aleatórios para você usar em suas aventuras de RPG. Para isso, basta digitar o comando **!item** e eu vou te dar um item aleatório.\n\nSeus itens serão guardados na sua mochila automaticamente (você pode guardar até 10 itens e pode acessar a sua mochila através do comando **!abrirmochila**, depois disso, você terá que **!descartar** ou **!trocar** itens com outros jogadores).\n\nEspero que você goste e se divirta com os itens que eu vou te dar. Boa sorte!\n\n*Para ver todos os meus comandos disponíveis, utilize* **!comandos**.')
+    await ctx.send('**Olá! Eu sou o Random. Vou te explicar o que sou e como você pode me usar.**\n\nVeja bem, eu sou um bot que gera itens aleatórios para você usar em suas aventuras de RPG. Para isso, basta digitar o comando **!item** e eu vou te dar um item aleatório.\n\nSeus itens serão guardados na sua mochila automaticamente (você pode guardar até 10 itens e pode acessar a sua mochila através do comando **!mochila**, depois disso, você terá que **!descartar**, **!trocar** ou **!melhorarmochila**).\n\nEspero que você goste e se divirta com os itens que eu vou te dar. Boa sorte!\n\n*Para ver todos os meus comandos disponíveis, utilize* **!comandos**.')
 
 
 #command list
 @client.command(name='comandos', aliases=['commands'])
 async def comandos(ctx):
-    await ctx.send('**Olá! Eu sou o Random.** Aqui está minha lista de comandos:\n\n**!ola** - Me cumprimenta.\n**!ajuda** ou **!help** - Explica o que eu sou e como você pode me usar.\n**!comandos** - Mostra a lista de comandos disponíveis.\n**!item** - Gera um item aleatório para você.\n**!mochila** - Lista os itens na mochila do usuário\n**!descartar [numero]** - Descarta um item da sua mochila de acordo com seu índice. Exemplo: !descartar 1\n**!troca [numero] @usuario [numero]** - Troca um item de sua mochila com o de outro usuário. Exemplo: !troca 1 @fulano 2 (esse comando solicita uma troca do seu item número 1 pelo item número 2 do usuário mencionado)\n\n**Espero que você se divirta com meus comandos!**')
+    await ctx.send('**Olá! Eu sou o Random.** Aqui está minha lista de comandos:\n\n**!ola** - Me cumprimenta.\n**!ajuda** ou **!help** - Explica o que eu sou e como você pode me usar.\n**!comandos** - Mostra a lista de comandos disponíveis.\n**!item** - Gera um item aleatório para você.\n**!mochila** - Lista os itens na mochila do usuário\n**!descartar [numero]** - Descarta um item da sua mochila de acordo com seu índice. Exemplo: !descartar 1\n**!troca [numero] @usuario [numero]** - Troca um item de sua mochila com o de outro usuário. Exemplo: !troca 1 @fulano 2 (esse comando solicita uma troca do seu item número 1 pelo item número 2 do usuário mencionado)\n**!creditos** - Mostra os créditos do usuário e uma descrição de sua mecânica.\n**!melhorarmochila** - Gasta 2 créditos do usuário para aumentar a sua mochila em 1 espaço.\n\n**Espero que você se divirta com meus comandos!**')
 
 
 # Open Bag
@@ -48,10 +45,10 @@ async def abrirmochila(ctx):
 
     user_id = ctx.author.id
     
-    bag = crud.open_bag(user_id)
+    bag, slots = crud.open_bag(user_id)
 
     if len(bag) > 0:
-        bag_str = 'Seus itens:\n\n'
+        bag_str = f'**Espaços utilizados:** {len(bag)}/{slots}.\n\n**Seus itens:**\n\n'
         for item in bag:
             n = bag.index(item) + 1
             bag_str += f'**{n} ->** {item}\n'
@@ -61,7 +58,7 @@ async def abrirmochila(ctx):
 
 
 # Remove Item
-@client.command(name='descartar', aliases=['remover', 'lixeira', 'jogarfora'])
+@client.command(name='descartar', aliases=['remover', 'lixeira', 'jogarfora', 'Descartar'])
 async def descartar(ctx, i: int):
     user_id = ctx.author.id
 
@@ -78,196 +75,153 @@ async def item(ctx):
     item = crud.return_free_item(user_id)
 
     if item == 0:
-        await ctx.send('Você já pegou muitos itens hoje. Volte amanhã!')
+        await ctx.send('Você está sem créditos para sortear mais itens! Volte amanhã!')
     elif item == -1:
         await ctx.send('Sua mochila está cheia! Descarte ou troque itens para pegar mais. **!ajuda** para mais informações.')
     else:
         if "Jackpot!" in item:
             crud.jackpot(user_id)
-            await ctx.send(f'**💰 Ding ding ding! TEMOS UM VENCEDOR!?:**\n\n**->** {item}\n\nCréditos permitem que você tire vários itens sem a limitação de dois itens por dia!')
+            await ctx.send(f'**💰 Ding ding ding! TEMOS UM VENCEDOR!?:**\n\n**->** {item}\n\n')
         else:
-            if crud.add_item(item, user_id):
-                await ctx.send(f'**Ding ding ding! Você ganhou o item a seguir:**\n\n**->** {item}\n\nUse o comando **!abrirmochila** para ver seus itens!{message_vip}')
-            else:
-                await ctx.send('Algo deu errado ao guardar seu item! Tente novamente.')
-
+            await ctx.send(f'**Ding ding ding! Você ganhou o item a seguir:**\n\n**->** {item}\n\nUse o comando **!abrirmochila** para ver seus itens')
 
 
 # Random Curiosity
 @client.command(name='curiosidade')
 async def curiosidade(ctx):
-    user_id = str(ctx.author.id)
-    if check_limit(user_id, "curiosities") == 0:
-        curiosidade = return_sp()
-        await ctx.send(f'**Está na hora da cursiosidade aleatória! Será que você já sabia?**\n\n-> {curiosidade}')
-    else:
+    user_id = ctx.author.id
+
+    curiosidade = crud.return_free_curiosity(user_id)
+
+    if curiosidade == '' :
         await ctx.send('Você já sabe coisas demais. Volte amanhã!')
+    else:
+        await ctx.send(f'**Está na hora da cursiosidade aleatória! Será que você já sabia?**\n\n-> {curiosidade}')
+    
+        
 
 
 # Exchange items
-@client.command(name="troca", aliases=["trocar"])
+@client.command(name='troca', aliases=['trocar', 'exchange'])
 async def troca(ctx, item1: int, usuario: discord.Member, item2: int):
-    try:
-        users = json.load(open('limits.json', 'r', encoding='utf-8'))
-    except Exception as e:
-        print(e)
-
     solicitante = ctx.author
     mencionado = usuario
-    solicitante_id = str(solicitante.id)
-    mencionado_id = str(mencionado.id)
+    solicitante_id = solicitante.id
+    mencionado_id = mencionado.id
 
-    nameitem1 = name_item_user(solicitante_id, item1)
-    nameitem2 = name_item_user(mencionado_id, item2)
-
-    if nameitem1 not in users[solicitante_id]["bag"]:
-        await ctx.send(f"❌ {solicitante.mention}, você não possui o item `{item1}`.")
+    if solicitante_id == mencionado_id:
+        await ctx.send("❌ Você não pode trocar itens com você mesmo.")
         return
 
-    if nameitem2 not in users[mencionado_id]["bag"]:
-        await ctx.send(f"❌ {mencionado.mention}, ele não possui o item `{item2}`.")
-        return
-    
+    try:
+        nameitem1 = crud.open_bag(solicitante_id)[0][item1 - 1]
+        nameitem2 = crud.open_bag(mencionado_id)[0][item2 - 1]
+        ticket_id = crud.create_ticket(solicitante_id, 1, nameitem1, nameitem2, mencionado_id)
+    except Exception as e:
+        print(e)
+        await ctx.send("❌ Não foi possível solicitar a troca no momento.")
+    else:
+        mensagem = (
+            f"🔄 {mencionado.mention}, {solicitante.mention} quer trocar um item com você! `ID de troca: {ticket_id}`\n"
+            f"📌 Ele quer trocar o item `{nameitem1}` pelo seu item `{nameitem2}`.\n"
+            f"✉ Para aceitar, digite `!aceito {ticket_id}` ou `!recuso {ticket_id}`.\n"
+            f"❌ Se mudou de ideia e quer cancelar a troca, digite `!cancelar {ticket_id}`."
+        )
 
-    # Creating a exchange ticket
-
-    ticket_id = str(len(load_tickets()) + 1)
-
-    ticket = {
-        "date": datetime.now().strftime("%d/%m/%Y"),
-        "type": 0, 
-        "user_id": solicitante_id,
-        "item": nameitem1,
-        "purpose": nameitem2,
-        "user_id_request": mencionado_id,
-        "result": "",
-        "status": 1  # Status 1: Open - Status 0: Closed
-    }
-
-    tickets = load_tickets()
-    tickets[ticket_id] = ticket
-    save_tickets(tickets)
-
-    name_item1 = name_item_user(str(solicitante.id), item1)
-    name_item2 = name_item_user(str(mencionado.id), item2)
-
-    mensagem = (
-        f"🔄 {mencionado.mention}, {solicitante.mention} quer trocar um item com você! `ID de troca: {ticket_id}`\n"
-        f"📌 Ele quer trocar o item `{nameitem1}` pelo seu item `{nameitem2}`.\n"
-        f"✉ Para aceitar, digite `!aceito {ticket_id}` ou `!recuso {ticket_id}`.\n"
-        f"❌ Se mudou de ideia e quer cancelar a troca, digite `!cancelar {ticket_id}`."
-    )
-
-    await ctx.send(mensagem)
+        await ctx.send(mensagem)
 
 
 @client.command(name="cancelar", aliases=["cancela", "cancelartroca"])
-async def cancelar(ctx, ticket_id: str):
-    tickets = load_tickets()
-
-    ticket = tickets[ticket_id]
-
-    if str(ctx.author.id) != ticket["user_id"]:
-        await ctx.send("🚫 Você não pode cancelar esta troca, pois não é o solicitante.")
-        return
-    
-    if ticket["status"] == 1 and ticket["result"] == "":    
-        ticket["result"] = "Cancelado"
-        ticket["status"] = 0
-        save_tickets(tickets)
-
-        mensagem = (
-            f" {ctx.author.mention} cancelou a troca!\n"
-        )
-    else:
-        mensagem = (
-            f"❌ {ctx.author.mention} a troca em questão já foi finalizada!\n"
-        )
-
+async def cancelar(ctx, ticket_id: int):
+    mensagem = crud.close_ticket(ctx.author.id, ticket_id, "cancelar")
     await ctx.send(mensagem)
 
 
 @client.command(name="aceito")
-async def aceito(ctx, ticket_id: str):
-    try:
-        users = json.load(open('limits.json', 'r', encoding='utf-8'))
-    except Exception as e:
-        print(e)
+async def aceito(ctx, ticket_id: int):
+    dados = crud.close_ticket(ctx.author.id, ticket_id, "aceito")
 
-    tickets = load_tickets()
-
-    if ticket_id not in tickets:
-        await ctx.send("❌ Ticket não encontrado.")
+    if "❌" in dados:
+        await ctx.send(dados)
         return
+    else:
+        solicitante_id = dados[0]
+        mencionado_id = dados[1]
+        item1 = dados[2]
+        item2 = dados[3]
 
-    ticket = tickets[ticket_id]
+        solicitante = await client.fetch_user(solicitante_id)
+        mencionado = await client.fetch_user(mencionado_id)
 
-    if str(ctx.author.id) != ticket["user_id_request"]:
-        await ctx.send("🚫 Você não pode aceitar esta troca, pois não é o destinatário.")
-        return
+        mensagem = (
+            f"✅ {mencionado.mention} aceitou a troca!\n"
+            f"🔄 {solicitante.mention}, sua troca do item `{item1}` pelo `{item2}` foi aceita!"
+        )
 
-    item1 = ticket["item"]
-    solicitante_id = ticket["user_id"]
-    mencionado_id = ticket["user_id_request"] 
-    item2 = ticket["purpose"]
-
-    if item1 not in users[solicitante_id]["bag"]:
-        await ctx.send(f"❌ O item `{item1}` não está mais no inventário de {ctx.author.mention}. Troca cancelada.")
-        return
-    
-    if item2 not in users[mencionado_id]["bag"]:
-        await ctx.send(f"❌ O item `{item2}` não está mais no inventário de {ctx.author.mention}. Troca cancelada.")
-        return
-    
-    index_item1 = users[solicitante_id]["bag"].index(item1)
-    index_item2 = users[mencionado_id]["bag"].index(item2)
-    
-    swap_items(solicitante_id, index_item1, mencionado_id, index_item2)
-
-    ticket["result"] = "Aceito"
-    ticket["status"] = 0
-    save_tickets(tickets)
-
-    solicitante = await client.fetch_user(int(solicitante_id))
-    mencionado = ctx.author
-
-    mensagem = (
-        f"✅ {mencionado.mention} aceitou a troca!\n"
-        f"🔄 {solicitante.mention}, sua troca do item `{ticket['item']}` pelo `{ticket['purpose']}` foi aceita!"
-    )
-
-    await ctx.send(mensagem)
+        await ctx.send(mensagem)
 
 
 @client.command(name="recuso")
-async def recuso(ctx, ticket_id: str):
-    tickets = load_tickets()
+async def recuso(ctx, ticket_id: int):
+    dados = crud.close_ticket(ctx.author.id, ticket_id, "aceito")
 
-    if ticket_id not in tickets:
-        await ctx.send("❌ Ticket não encontrado.")
+    if "❌" in dados:
+        await ctx.send(dados)
         return
+    else:
+        solicitante_id = dados[0]
+        mencionado_id = dados[1]
+        item1 = dados[2]
+        item2 = dados[3]
 
-    ticket = tickets[ticket_id]
+        solicitante = await client.fetch_user(solicitante_id)
+        mencionado = await client.fetch_user(mencionado_id)
 
-    # Verificar se o usuário tem permissão para recusar a troca
-    if str(ctx.author.id) != ticket["user_id_request"]:
-        await ctx.send("🚫 Você não pode recusar esta troca, pois não é o destinatário.")
-        return
+        mensagem = (
+            f"❌ {mencionado.mention} recusou a troca.\n"
+            f"🔄 {solicitante.mention}, sua solicitação para trocar `{item1}` pelo `{item2}` foi recusada."
+        )
 
-    # Atualizar status do ticket
-    ticket["result"] = "Recusado"
-    ticket["status"] = 0  # Ticket fechado
-    save_tickets(tickets)
+        await ctx.send(mensagem)
 
-    # Notificar os envolvidos
-    solicitante = await client.fetch_user(int(ticket["user_id"]))
-    mencionado = ctx.author
 
-    mensagem = (
-        f"❌ {mencionado.mention} recusou a troca.\n"
-        f"🔄 {solicitante.mention}, sua solicitação para trocar `{ticket['item']}` pelo `{ticket['purpose']}` foi recusada."
-    )
+@client.command(name="melhorarmochila", aliases=["melhorarbag", "aumentarmochila", "aumentarbag", "buyslots", "comprarslots", "comprarespaço", "comprarespaços"])
+async def melhorarmochila(ctx):
+    user_id = ctx.author.id
 
-    await ctx.send(mensagem)
+    message = crud.buy_slots(user_id)
+
+    if message:
+        await ctx.send("**Sua mochila foi melhorada! Agora você pode guardar mais itens.**")
+    else:
+        await ctx.send("**Você não tem créditos o suficiente para melhorar sua mochila!**")
+
+
+@client.command(name="creditos", aliases=["credits", "saldo", "créditos"])
+async def creditos(ctx):
+    user_id = ctx.author.id
+
+    credits = crud.check_credits(user_id)
+
+    await ctx.send(f"**💰 Confira seus créditos agora:**\n\n**->** 🪙 **Créditos**: {credits}\n\nTodos os dias, todos os jogadores ganham +1 crédito.\nCréditos são cumulativos e podem ser comprados ou adquiridos em negociações.\n\nAbra o menu `!ajuda` para mais informações.")
+
+
+@client.command(name="admfunctiondeposit")
+async def deposit(ctx, user_id, n):
+
+    if ctx.author.id == 377217614520385536:
+        credits = crud.deposit(user_id, n)
+        if credits:
+            await ctx.send("command exec")
+
+#@client.command(name="eventoaleatorio", aliases=["randomevent", "event", "evento"])
+#async def eventoaleatorio(ctx):
+#    user_id = ctx.author.id
+
+#    evento = crud.random_event(user_id)
+
+#    await ctx.send(f"**🎲 Evento aleatório:**\n\n{evento}")
 
 client.run(mykey)
+
+

@@ -1,7 +1,7 @@
 import sqlite3
 import json
 
-conn = sqlite3.connect("randombase.db")
+conn = sqlite3.connect("database/randombase.db")
 
 cursor = conn.cursor()
 
@@ -9,7 +9,6 @@ cursor.execute('''
 CREATE TABLE IF NOT EXISTS users (
     user_id INTEGER PRIMARY KEY,
     date TEXT,
-    items_free INTEGER,
     curiosities_free INTEGER,
     credits INTEGER,
     bag TEXT
@@ -47,6 +46,32 @@ CREATE TABLE IF NOT EXISTS tickets (
 '''
 )
 
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS sell_buy (
+    id TEXT PRIMARY KEY,
+    date TEXT,
+    type INTEGER,
+    user_id INTEGER,
+    item TEXT,
+    value FLOAT,
+    user_id_request INTEGER,
+    result TEXT,
+    status INTEGER
+)
+'''
+)
+
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    description TEXT,
+    target TEXT,
+    number INTEGER,
+    function TEXT
+)
+'''
+)
+
 with open('d1000.csv', 'r', encoding='utf-8') as file:
     lines = [line.strip() for line in file]
 
@@ -69,21 +94,23 @@ with open('limits.json', 'r', encoding='utf-8') as file:
 
 for user_id, info in dados.items():
     date = info['date']
-    items_free = info["counts"]["items"]
-    curiosities_free = info["counts"]["curiosities"]
+    curiosities_free = 2
     try:
         credits = info["counts"]["items_vip"]
     except:
-        credits = 0
-    bag = json.dumps(info["bag"], ensure_ascii=False)
+        credits = 5
+    bag = {
+        "items": info["bag"],
+        "slots": 10
+    }
+    bag = json.dumps(bag, ensure_ascii=False)
 
     cursor.execute('''
-    INSERT INTO users (user_id, date, items_free, curiosities_free, credits, bag) VALUES (?, ?, ?, ?, ?, ?)
-    ''', (int(user_id), date, items_free, curiosities_free, credits, bag))
+    INSERT INTO users (user_id, date, curiosities_free, credits, bag) VALUES (?, ?, ?, ?, ?)
+    ''', (int(user_id), date, curiosities_free, credits, bag))
 
 
 
 conn.commit()
-
 
 conn.close()
