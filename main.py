@@ -12,7 +12,7 @@ client = commands.Bot(command_prefix='!', intents=intents, help_command=None)
 # Verify if bot is working
 @client.event
 async def on_ready():
-    print('Bot is working.')
+    print('Bot is working. Last update -> 24/02/2025 - 11:11')
 
 
 # Sending hello
@@ -79,8 +79,7 @@ async def item(ctx):
     elif item == -1:
         await ctx.send('Sua mochila está cheia! Descarte ou troque itens para pegar mais. **!ajuda** para mais informações.')
     else:
-        if "Jackpot!" in item:
-            crud.jackpot(user_id)
+        if "Jackpot" in item:
             await ctx.send(f'**💰 Ding ding ding! TEMOS UM VENCEDOR!?:**\n\n**->** {item}\n\n')
         else:
             await ctx.send(f'**Ding ding ding! Você ganhou o item a seguir:**\n\n**->** {item}\n\nUse o comando **!abrirmochila** para ver seus itens')

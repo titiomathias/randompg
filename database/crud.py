@@ -20,22 +20,23 @@ def return_free_item(user_id: int):
         data_atual = datetime.now().date()
         
         try:
-            data = datetime.strptime(user[0][1], '%Y-%m-%d').date()
-        except ValueError:
-            try:
-                data = datetime.strptime(user[0][1], '%d/%m/%Y').date()
-            except ValueError as e:
-                print(f"Erro ao converter data: {e}")
-                return -1
+            data = datetime.strptime(user[0][1], '%d/%m/%Y').date()
+        except ValueError as e:
+            print(f"Erro ao converter data: {e}")
+            return -1
 
         diferenca_dias = (data_atual - data).days
 
         if diferenca_dias > 0:
-            query = '''
-            UPDATE users SET date = ?, credits = credits + ?, curiosities_free = 2 WHERE user_id = ?
+            update_query = '''
+            UPDATE users 
+            SET date = ?, credits = credits + ?, curiosities_free = 2 
+            WHERE user_id = ?
             '''
-            cursor.execute(query, (data_atual.strftime('%Y-%m-%d'), diferenca_dias, user_id))
+            cursor.execute(update_query, (data_atual.strftime('%d/%m/%Y'), diferenca_dias, user_id))
             conn.commit()
+
+            return return_free_item(user_id)
 
         if user[0][3] > 0:
             bag = open_bag(user_id)
@@ -54,7 +55,10 @@ def return_free_item(user_id: int):
                 cursor.execute(query)
                 item = cursor.fetchone()[1]
 
-                add_item(item, user_id)
+                if "Jackpot" in item:
+                    jackpot(user_id)
+                else:
+                    add_item(item, user_id)
 
                 return item
             else:
@@ -190,11 +194,9 @@ def jackpot(user_id):
     user = cursor.fetchone()
 
     if user:
-        credits = user[3]+100
+        query = f"UPDATE users WHERE credits = credits + 100 WHERE user_id = ?"
 
-        query = f"UPDATE users WHERE credits = ? WHERE user_id = ?"
-
-        cursor.execute(query, (credits, user_id))
+        cursor.execute(query, (user_id,))
         conn.commit()
 
         return True
@@ -390,37 +392,38 @@ def close_sell_buy(user_id, business_id, result):
 
 
 def check_credits(user_id):
-    query = f"SELECT * FROM users WHERE user_id = {user_id}"
-
-    cursor.execute(query)
+    query = "SELECT date, credits FROM users WHERE user_id = ?"
+    cursor.execute(query, (user_id,))
     user = cursor.fetchone()
 
     if user:
         data_atual = datetime.now().date()
         
         try:
-            data = datetime.strptime(user[0][1], '%Y-%m-%d').date()
-        except ValueError:
-            try:
-                data = datetime.strptime(user[0][1], '%d/%m/%Y').date()
-            except ValueError as e:
-                print(f"Erro ao converter data: {e}")
-                return -1
+            data = datetime.strptime(user[0], '%d/%m/%Y').date()
+        except ValueError as e:
+            print(f"Erro ao converter data: {e}")
+            return -1
 
         diferenca_dias = (data_atual - data).days
 
         if diferenca_dias > 0:
-            query = '''
-            UPDATE users SET date = ?, credits = credits + ?, curiosities_free = 2 WHERE user_id = ?
+            update_query = '''
+            UPDATE users 
+            SET date = ?, credits = credits + ?, curiosities_free = 2 
+            WHERE user_id = ?
             '''
-            cursor.execute(query, (data_atual.strftime('%Y-%m-%d'), diferenca_dias, user_id))
+            cursor.execute(update_query, (data_atual.strftime('%d/%m/%Y'), diferenca_dias, user_id))
             conn.commit()
 
-            return check_credits(user_id)
-        else:    
-            return user[3]
+            cursor.execute("SELECT credits FROM users WHERE user_id = ?", (user_id,))
+            updated_user = cursor.fetchone()
+            return updated_user[0]
+        else:
+            return user[1]
     else:
-        add_user(user_id, str(datetime.now().strftime("%d/%m/%Y")))
+        # Adiciona o usuário se não existir
+        add_user(user_id, datetime.now().strftime('%d/%m/%Y'))
         return check_credits(user_id)
     
 
