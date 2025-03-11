@@ -67,7 +67,7 @@ def return_free_item(user_id: int):
             return 0
     else:
         # Adiciona o usuário com a data no formato ISO
-        add_user(user_id, datetime.now().strftime('%Y-%m-%d'))
+        add_user(user_id, datetime.now().strftime('%d/%m/%Y'))
         return return_free_item(user_id)
 
 
@@ -100,9 +100,9 @@ def return_free_curiosity(user_id: int):
 
 
 def add_user(user_id, date):
-    query = f"INSERT INTO users (user_id, date, items_free, curiosities_free, credits, bag) VALUES (?, ?, ?, ?, ?, ?)"
+    query = f"INSERT INTO users (user_id, date, curiosities_free, credits, bag) VALUES (?, ?, ?, ?, ?)"
 
-    cursor.execute(query, (int(user_id), date, 2, 2, 0, json.dumps({'items': [], 'slots': 10}, ensure_ascii=False)))
+    cursor.execute(query, (int(user_id), date, 2, 2, json.dumps({'items': [], 'slots': 10}, ensure_ascii=False)))
 
     conn.commit()
 
@@ -165,7 +165,7 @@ def remove_item(item_id, user_id):
 
         return f'**Você descartou com sucesso o item: {item}**'
     else:
-        return 'Sua mochila está vazia! Utilize o comando **!item** para ganhar um item novo!'
+        return 'Sua mochila está vazia! Utilize o comando `!item` para ganhar um item novo!'
 
 
 def open_bag(user_id):
@@ -174,7 +174,7 @@ def open_bag(user_id):
     user = cursor.fetchone()
 
     if not user:
-        add_user(user_id, str(datetime.now().strftime("%d/%m/%Y")))
+        add_user(user_id, datetime.now().strftime("%d/%m/%Y"))
         return open_bag(user_id)
     
     try:
@@ -225,6 +225,12 @@ def fetch_ticket(ticket_id: int):
     return cursor.fetchone()
 
 
+def fetch_aposta(aposta_id: int):
+    query = f"SELECT * FROM apostas WHERE id = {aposta_id}"
+    cursor.execute(query)
+    return cursor.fetchone()
+
+
 def fetch_sell_buy(business_id: int):
     query = f"SELECT * FROM sell_buy WHERE id = {business_id}"
     cursor.execute(query)
@@ -249,6 +255,23 @@ def update_ticket_status(ticket_id: int, status: int, result: str):
 
     # Commit para salvar as alterações no banco de dados
     conn.commit()
+
+
+def update_aposta_status(aposta_id: int, status: int, result: str):
+    try:
+        if status == 0:
+            delete_query = f"DELETE FROM apostas WHERE id = {aposta_id}"
+            cursor.execute(delete_query)
+        else:
+            update_query = f"UPDATE apostas SET status = {status}, result = '{result}' WHERE id = {aposta_id}"
+            cursor.execute(update_query)
+
+        conn.commit()
+
+        return True
+    except Exception as e:
+        print("Erro ao atualiar status de aposta:", e)
+        return False
 
 
 def close_ticket(user_id_command: int, ticket_id: int, result: str):
@@ -342,7 +365,7 @@ def swap_items(user_id: int, user_id_request: int, item1: str, item2: str):
         return "fail"
     
 
-def buy_slots(user_id):
+def buy_slots(user_id, n):
     query = f"SELECT * FROM users WHERE user_id = {user_id}"
 
     cursor.execute(query)
@@ -353,13 +376,13 @@ def buy_slots(user_id):
         bag = bag_data['items']
         slots = bag_data['slots']
 
-        if user[3] >= 2:
+        if user[3] >= n*2:
             credits = user[3]
         else: 
             return False
         
-        slots += 1
-        credits -= 2
+        slots += n
+        credits -= n*2
 
         bag_data = {
             'items': bag,
@@ -426,10 +449,154 @@ def check_credits(user_id):
         add_user(user_id, datetime.now().strftime('%d/%m/%Y'))
         return check_credits(user_id)
     
+    
+def abriraposta(user_id, valor, user_id_request):
+    try:
+        query = f"INSERT INTO apostas (date, user_id, value, user_id_request, result, status) VALUES (?, ?, ?, ?, ?, ?)"
 
+        cursor.execute(query, (str(datetime.now().strftime("%d/%m/%Y")), user_id, valor, user_id_request, '', 1))
+
+        conn.commit()
+
+        return cursor.lastrowid
+    except Exception as e:
+        print(e)
+        return None
+
+
+def close_aposta(user_id_command: int, aposta_id: int, result: str):
+    results = ["pagar", "correr", "desistir"]
+
+    if result not in results:
+        return '❌ Comando inválido! Utilize `!pagar`, `!correr` ou `!desistir`.'
+
+    aposta = fetch_aposta(aposta_id)
+    
+    if not aposta:
+        return '❌ ID de aposta não encontrado ou já finalizado.'
+    
+    if result == "desistir":
+        if aposta[2] == user_id_command:
+            update_aposta_status(aposta_id, 0, 'Cancelado')
+            return '✅ Você desistiu da aposta!'
+        else:
+            return '❌ Você não desistir de uma aposta por outra pessoa!'
+
+    elif result == "pagar":
+        if aposta[4] == user_id_command:
+            if aposta[6] == 2:
+                return '❌ A aposta já está em andamento e não é possível pagá-la novamente!'
+    
+            resultado = update_aposta_status(aposta_id, 2, 'Andamento')
+            if resultado:
+                return (aposta[2], aposta[4], aposta[3])
+            else:
+                return '❌ Um erro inesperado ocorreu e não foi possível aceitar a aposta.'
+        else:
+            return '❌ Você não pode pagar uma aposta por outro usuário.'
+
+    elif result == "correr":
+        if aposta[4] == user_id_command:
+            if aposta[6] == 2:
+                return '❌ A aposta já está em andamento e não é mais possível correr!'
+
+            update_aposta_status(aposta_id, 0, 'Recusado')
+            return '✅ Você correu. A aposta foi recusada.'
+        else:
+            return '❌ Você não pode correr de uma aposta por outro usuário.'
+    
+
+def update_saldo_aposta(winner, loser, value):
+    try:
+        query_increment = "UPDATE users SET credits = credits + ? WHERE user_id = ?"
+        query_decrement = "UPDATE users SET credits = credits - ? WHERE user_id = ?"
+        
+        cursor.execute(query_increment, (value, winner))
+        conn.commit()
+
+        cursor.execute(query_decrement, (value, loser))
+        conn.commit()
+
+        return True
+    except Exception as e:
+        print("Erro ao atualizar saldo do vencedor e perdedor: ", e)
+        return False
+
+
+
+def roleta(aposta_id):
+    n = randint(1, 36)
+
+    vermelhos = {1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36}
+    
+    if n in vermelhos:
+        cor = "vermelho"
+        emoji = "🔴"
+    else:
+        cor = "preto"
+        emoji = "⚫"
+
+    aposta = fetch_aposta(aposta_id)
+
+    query = "SELECT value, user_id, user_id_request, user_id_color FROM apostas WHERE id = ?"
+    cursor.execute(query, (aposta_id,))
+    resultado = cursor.fetchone()
+
+    valor = resultado[0]
+    user_id = resultado[1]
+    user_id_request = resultado[2]
+    user_id_color = resultado[3]
+
+    if user_id_color == cor:
+        update_saldo_aposta(user_id, user_id_request, valor)
+        vencedor = user_id
+        perdedor = user_id_request
+    else:
+        update_saldo_aposta(user_id_request, user_id, valor)
+        vencedor = user_id_request
+        perdedor = user_id
+
+    update_aposta_status(aposta_id, 0, "Encerrado")
+
+    return {"vencedor": vencedor, "perdedor": perdedor, "valor": valor, "emoji": emoji, "numero": n, "cor": cor}
+
+
+def setcolor(color, aposta_id, type):
+    if type == 1:
+        user = "user_id_color"
+        user2 = "user_id_request_color"
+    else:
+        user = "user_id_request_color"
+        user2 = "user_id_color"
+
+    if color == "vermelho":
+        color2 = "preto"
+    else:
+        color2 = "vermelho"
+
+    query = f"UPDATE apostas SET {user} = ?, {user2} = ?  WHERE id = ?"
+    cursor.execute(query, (color, color2, aposta_id))
+    conn.commit()
+
+    return roleta(aposta_id)
+
+
+def rank():
+    try:
+        query = f"SELECT user_id, credits FROM users ORDER BY credits DESC LIMIT 10"
+        cursor.execute(query)
+        rank = cursor.fetchall()
+        print(rank)
+        return rank
+    except Exception as e:
+        print("Um erro inesperado ocorreu ao tentar rankear. Erro: ", e)
+        return
+
+
+# Adm function
 def deposit(user_id, n):
     query = f"UPDATE users SET credits = credits + {n} WHERE user_id = {user_id}"
     cursor.execute(query)
     conn.commit()
 
-    
+    return True    
