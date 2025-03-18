@@ -209,7 +209,7 @@ async def creditos(ctx):
     await ctx.send(f"**💰 Confira seus créditos agora:**\n\n**->** 🪙 **Créditos**: {credits}\n\nTodos os dias, todos os jogadores ganham +1 crédito.\nCréditos são cumulativos e podem ser comprados ou adquiridos em negociações.\n\nAbra o menu `!ajuda` para mais informações.")
 
 
-@client.command(name="aposta", aliases=["apostar", "gambly", "fazeraposta"])
+@client.command(name="aposta", aliases=["apostar", "gambly", "fazeraposta", "bet", "bets"])
 async def aposta(ctx, creditos: int, usuario: discord.Member):
     user_id = ctx.author.id
     user_id_request = usuario.id
