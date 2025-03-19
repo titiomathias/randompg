@@ -1,0 +1,156 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+:root {
+    --background-color: #1E2124;
+    --text-color: #FFFFFF;
+    --main-color: #EC635B;
+    --second-color: #FFCE01;   
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+#canvas-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    opacity: 0.8;
+}
+
+a {
+    text-decoration: none;
+    color: var(--text-color);
+}
+
+#root {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--background-color);
+    padding: 1rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3); /* Adicionando uma sombra */
+    border-radius: 1rem;
+}
+
+#root:hover {
+    scale: 1.02;
+    transition: ease 0.3s;
+}
+
+.bit-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.big-title h1 {
+    font-size: 3rem;
+    padding: 0;
+    margin: 0;
+    padding: 0;
+}
+
+.main {
+    color: var(--main-color);
+}
+
+.second {
+    color: var(--second-color);
+}
+
+.big-title h3 {
+    color: var(--main-color);
+    font-size: 1.75rem;
+    font-weight: 300;
+    padding: 0;
+    margin: 0;
+    padding: 0;
+}
+
+.content {
+    width: 80%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 2rem 0rem 1rem 0rem;
+}
+
+p {
+    text-align: center;
+    font-size: 1.25rem;
+}
+
+
+.discord-bot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 1rem 0rem;
+}
+
+.add-discord-bot {
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    background-color: var(--main-color);
+    color: var(--background-color);
+    padding: 0.5rem 2.5rem;
+    border-radius: 0.5rem;
+}
+
+.add-discord-bot:hover {
+    transition: 0.3s ease-in-out;
+    background-color: var(--second-color);
+    color: var(--background-color);
+}
+
+/* w2ksnCsAMDsl47oVvC1/d/elif/ */
+
+.social-media {
+    margin: 1.5rem 0rem 1rem 0rem;
+    width: 50%;
+    font-size: 2.5rem;
+    display: flex;
+    justify-content: space-between;
+}
+
+.social-media a {
+    transition: fill 0.3s ease, transform 0.3s ease;
+}
+
+.social-media a:hover{
+    color: var(--second-color);
+    transform: rotate(30deg) scale(1.2);
+}
+
+.footer {
+    margin: 1rem 0rem;
+}
+
+.contact-me {
+    color: var(--main-color);
+}
+
+.contact-me:hover {
+    transition: 0.5s ease;
+    color: var(--second-color);
+}
