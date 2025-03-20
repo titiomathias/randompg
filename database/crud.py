@@ -60,6 +60,8 @@ def return_free_item(user_id: int):
                 else:
                     add_item(item, user_id)
 
+                verify_backup()
+
                 return item
             else:
                 return -1
@@ -94,6 +96,8 @@ def return_free_curiosity(user_id: int):
         cursor.execute(query)
         curiosity = cursor.fetchone()[1]
 
+        verify_backup()
+
         return curiosity
     else:
         return ''
@@ -105,6 +109,8 @@ def add_user(user_id, date):
     cursor.execute(query, (int(user_id), date, 2, 2, json.dumps({'items': [], 'slots': 10}, ensure_ascii=False)))
 
     conn.commit()
+
+    verify_backup()
 
 
 def add_item(item_name, user_id):
@@ -163,6 +169,8 @@ def remove_item(item_id, user_id):
 
         conn.commit()
 
+        verify_backup()
+
         return f'**Você descartou com sucesso o item: {item}**'
     else:
         return 'Sua mochila está vazia! Utilize o comando `!item` para ganhar um item novo!'
@@ -199,6 +207,8 @@ def jackpot(user_id):
         cursor.execute(query, (user_id,))
         conn.commit()
 
+        verify_backup()
+
         return True
     else:
         add_user(user_id, str(datetime.now().strftime("%d/%m/%Y")))
@@ -212,6 +222,8 @@ def create_ticket(user_id: int, type: int, item: str, purpose: str, user_id_requ
         cursor.execute(query, (str(datetime.now().strftime("%d/%m/%Y")), user_id, item, purpose, user_id_request, '', 1))
 
         conn.commit()
+
+        verify_backup()
 
         return cursor.lastrowid
     except Exception as e:
@@ -396,6 +408,8 @@ def buy_slots(user_id, n):
         cursor.execute(query, (bag_update, credits))
         conn.commit()
 
+        verify_backup()
+
         return True
     else:
         return False
@@ -441,6 +455,9 @@ def check_credits(user_id):
 
             cursor.execute("SELECT credits FROM users WHERE user_id = ?", (user_id,))
             updated_user = cursor.fetchone()
+
+            verify_backup()
+
             return updated_user[0]
         else:
             return user[1]
@@ -517,6 +534,8 @@ def update_saldo_aposta(winner, loser, value):
         cursor.execute(query_decrement, (value, loser))
         conn.commit()
 
+        verify_backup()
+
         return True
     except Exception as e:
         print("Erro ao atualizar saldo do vencedor e perdedor: ", e)
@@ -586,7 +605,7 @@ def rank():
         query = f"SELECT user_id, credits FROM users ORDER BY credits DESC LIMIT 10"
         cursor.execute(query)
         rank = cursor.fetchall()
-        print(rank)
+
         return rank
     except Exception as e:
         print("Um erro inesperado ocorreu ao tentar rankear. Erro: ", e)
@@ -598,5 +617,7 @@ def deposit(user_id, n):
     query = f"UPDATE users SET credits = credits + {n} WHERE user_id = {user_id}"
     cursor.execute(query)
     conn.commit()
+
+    verify_backup()
 
     return True    
