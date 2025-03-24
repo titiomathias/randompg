@@ -38,7 +38,7 @@ def verify_backup():
 
         if (current_time - last_modified_time) > 6 * 3600:
             print("Backup desatualizado. Criando um novo backup...")
-            shutil.copy("randombase.db", "backup.db")
+            shutil.copy("database/randombase.db", "backup.db")
         else:
             print("Backup está atualizado.")
 

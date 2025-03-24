@@ -501,7 +501,7 @@ def close_aposta(user_id_command: int, aposta_id: int, result: str):
 
     elif result == "pagar":
         if aposta[4] == user_id_command:
-            if aposta[6] == 2:
+            if aposta[8] == 2:
                 return '❌ A aposta já está em andamento e não é possível pagá-la novamente!'
     
             resultado = update_aposta_status(aposta_id, 2, 'Andamento')
@@ -514,7 +514,7 @@ def close_aposta(user_id_command: int, aposta_id: int, result: str):
 
     elif result == "correr":
         if aposta[4] == user_id_command:
-            if aposta[6] == 2:
+            if aposta[8] == 2:
                 return '❌ A aposta já está em andamento e não é mais possível correr!'
 
             update_aposta_status(aposta_id, 0, 'Recusado')

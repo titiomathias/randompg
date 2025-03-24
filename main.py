@@ -1,3 +1,4 @@
+import asyncio
 import discord
 from discord.ext import commands
 from mykey import mykey
@@ -12,7 +13,7 @@ client = commands.Bot(command_prefix='!', intents=intents, help_command=None)
 # Verify if bot is working
 @client.event
 async def on_ready():
-    print('Bot is working. Last update -> 24/02/2025 - 11:11')
+    print('Bot is working. Last update -> 24/03/2025 - 16:32')
 
 
 # Sending hello
@@ -30,33 +31,209 @@ async def segredo(ctx):
 # help command
 @client.command(name='ajuda', aliases=['help'])
 async def ajuda(ctx):
-    await ctx.send('**Olá! Eu sou o Random. Vou te explicar o que sou e como você pode me usar.**\n\nVeja bem, eu sou um bot que gera itens aleatórios para você usar em suas aventuras de RPG. Para isso, basta digitar o comando **!item** e eu vou te dar um item aleatório.\n\nSeus itens serão guardados na sua mochila automaticamente (você pode guardar até 10 itens e pode acessar a sua mochila através do comando **!mochila**, depois disso, você terá que **!descartar**, **!trocar** ou **!melhorarmochila**).\n\nEspero que você goste e se divirta com os itens que eu vou te dar. Boa sorte!\n\n*Para ver todos os meus comandos disponíveis, utilize* **!comandos**.')
+    embed = discord.Embed(
+        title="🎲 **AJUDA DO RANDOM**",
+        description="Olá! Eu sou o **Random**, seu companheiro de aventuras aleatórias! "
+                   "Aqui está tudo que você precisa saber para me usar:",
+        color=0x3498db 
+    )
 
+    embed.set_thumbnail(url="https://i.imgur.com/CpmmKLI.png")
 
-#command list
+    # Comandos principais
+    embed.add_field(
+        name="🎁 **COMANDOS BÁSICOS**",
+        value=(
+            "```\n"
+            "!item       → Gera um item aleatório para sua mochila.\n"
+            "!mochila    → Mostra todos os itens que você coletou.\n"
+            "!descartar  → Remove um item da sua mochila.\n"
+            "!trocar     → Substitui um item por outro aleatório.\n"
+            "!melhorar   → Expande sua mochila para guardar mais itens.\n"
+            "!enigma     → Mostra os gênios que resolveram o enigma supremo.\n"
+            "```"
+        ),
+        inline=False
+    )
+
+    # Como funciona
+    embed.add_field(
+        name="📦 **SOBRE A MOCHILA**",
+        value=(
+            "• Você começa com **10 espaços** na mochila.\n"
+            "• Use `!melhorar` para aumentar sua capacidade.\n"
+            "• Itens duplicados? Use `!trocar` ou `!descartar`.\n"
+            "• Quer um desafio? Tente resolver o `!enigma`!"
+        ),
+        inline=False
+    )
+
+    # Footer com dica
+    embed.set_footer(
+        text="Dica: Digite !comandos para ver a lista completa de comandos.",
+        icon_url="https://i.imgur.com/CpmmKLI.png" 
+    )
+
+    await ctx.send(embed=embed)
+
+# comandos
 @client.command(name='comandos', aliases=['commands'])
 async def comandos(ctx):
-    await ctx.send('**Olá! Eu sou o Random.** Aqui está minha lista de comandos:\n\n**!ola** - Me cumprimenta.\n**!ajuda** ou **!help** - Explica o que eu sou e como você pode me usar.\n**!comandos** - Mostra a lista de comandos disponíveis.\n**!item** - Gera um item aleatório para você.\n**!mochila** - Lista os itens na mochila do usuário\n**!descartar [numero]** - Descarta um item da sua mochila de acordo com seu índice. Exemplo: !descartar 1\n**!creditos** - Mostra os créditos do usuário e uma descrição de sua mecânica.\n**!rank** - Mostra o rank dos 10 usuários com mais créditos.\n\n**!troca [numero] @usuario [numero]** - Troca um item de sua mochila com o de outro usuário. Exemplo: !troca 1 @fulano 2 -> Esse comando solicita uma troca do seu item número 1 pelo item número 2 do usuário mencionado.\n\n**!melhorarmochila [n]** - Aumentar a sua mochila em um número de espaços fornecidos, gastando 2 créditos por espaço. Exemplo: !melhorarmochila 2 -> Aumanta 2 espaços da mochila por 4 créditos.\n\n**!apostar [creditos] @usuario** -  Aposta um número de créditos na roleta com outro usuário.\n\n**Espero que você se divirta com meus comandos!**')
+    embed = discord.Embed(
+        title="📜 **LISTA DE COMANDOS DO RANDOM**",
+        description="Olá! Eu sou o **Random**, seu companheiro de aventuras aleatórias! "
+                   "Aqui está tudo o que você pode fazer comigo:",
+        color=0x9B59B6
+    )
 
+    embed.set_thumbnail(url="https://i.imgur.com/CpmmKLI.png")
+
+    embed.add_field(
+        name="🔹 **INTERAÇÃO**",
+        value=(
+            "```\n"
+            "!ola        → Cumprimenta o bot\n"
+            "!ajuda      → Explica como usar o bot\n"
+            "!comandos   → Mostra esta lista\n"
+            "```"
+        ),
+        inline=False
+    )
+
+    embed.add_field(
+        name="🎁 **ITENS & MOCHILA**",
+        value=(
+            "```\n"
+            "!item              → Gera um item aleatório\n"
+            "!mochila           → Mostra seus itens\n"
+            "!descartar [n]     → Descarta o item nº [n]\n"
+            "!troca [n] @user [n] → Troca itens com outro jogador\n"
+            "!melhorarmochila [n] → Expande sua mochila (+2 créditos/espaço)\n"
+            "```"
+        ),
+        inline=False
+    )
+
+    embed.add_field(
+        name="💰 **CRÉDITOS & RANKING**",
+        value=(
+            "```\n"
+            "!creditos       → Mostra seus créditos\n"
+            "!rank           → Top 10 usuários\n"
+            "!apostar [n] @user → Aposta créditos na roleta\n"
+            "```"
+        ),
+        inline=False
+    )
+
+    embed.add_field(
+        name="🧩 **DESAFIO**",
+        value=(
+            "```\n"
+            "!enigma → Mostra os gênios que resolveram o desafio supremo\n"
+            "```"
+        ),
+        inline=False
+    )
+
+    embed.add_field(
+        name="📌 **EXEMPLOS PRÁTICOS**",
+        value=(
+            "• `!descartar 2` → Descarta o 2º item da mochila\n"
+            "• `!troca 3 @Jogador 1` → Oferece seu item 3 pelo item 1 do @Jogador\n"
+            "• `!melhorarmochila 5` → +5 espaços (custa 10 créditos)\n"
+            "• `!apostar 10 @Rival` → Aposta 10 créditos contra @Rival"
+        ),
+        inline=False
+    )
+
+    embed.set_footer(
+        text="Dica: Use !ajuda para explicações detalhadas de cada comando.",
+        icon_url="https://i.imgur.com/CpmmKLI.png"
+    )
+
+    await ctx.send(embed=embed)
 
 # Open Bag
 @client.command(name='abrirmochila', aliases=['mochila', 'bag', 'openbag'])
 async def abrirmochila(ctx):
-
     user_id = ctx.author.id
-    
     bag, slots = crud.open_bag(user_id)
+    
+    if not bag:
+        embed = discord.Embed(
+            title="📦 Mochila Vazia",
+            description="Sua mochila está vazia! Use o comando **`!item`** para coletar itens.",
+            color=0xff0000  # Vermelho (pode mudar para qualquer cor em HEX)
+        )
+        return await ctx.send(embed=embed)
 
-    if len(bag) > 0:
-        bag_str = f'**Espaços utilizados:** {len(bag)}/{slots}.\n\n**Seus itens:**\n\n'
-        n = 1
-        for item in bag:
-            bag_str += f'**{n} ->** {item}\n'
-            n+=1
-        await ctx.send(bag_str)
-    else:
-        await ctx.send('Sua mochila está vazia! Use o comando **!item** para pegar itens.')
+    # Configurações da paginação
+    itens_por_pagina = 10
+    paginas = [bag[i:i + itens_por_pagina] for i in range(0, len(bag), itens_por_pagina)]
+    pagina_atual = 0
+    total_paginas = len(paginas)
 
+    # Função para criar o Embed da página atual
+    def criar_embed(pagina_idx):
+        pagina = paginas[pagina_idx]
+        embed = discord.Embed(
+            title=f"🎒 Mochila de {ctx.author.display_name}",
+            description=f"**Espaços:** `{len(bag)}/{slots}`\n**Página:** `{pagina_idx + 1}/{total_paginas}`",
+            color=0x00ff00  # Verde (personalize!)
+        )
+        
+        # Adiciona um thumbnail (opcional)
+        embed.set_thumbnail(url=ctx.author.avatar.url)
+        
+        # Adiciona os itens em campos (organizados)
+        itens_str = ""
+        inicio = pagina_idx * itens_por_pagina + 1
+        for n, item in enumerate(pagina, start=inicio):
+            itens_str += f"`{n}.` {item}\n"
+        
+        embed.add_field(
+            name="📋 Itens:",
+            value=itens_str if itens_str else "*Nenhum item nesta página*",
+            inline=False
+        )
+        
+        # Rodapé (opcional)
+        embed.set_footer(text="Navegue usando as reações abaixo →")
+        return embed
+
+    # Envia a mensagem inicial
+    mensagem = await ctx.send(embed=criar_embed(pagina_atual))
+
+    # Adiciona navegação por reações (se houver mais de uma página)
+    if total_paginas > 1:
+        await mensagem.add_reaction('⬅️')
+        await mensagem.add_reaction('➡️')
+
+        def check(reaction, user):
+            return user == ctx.author and reaction.message.id == mensagem.id and str(reaction.emoji) in ['⬅️', '➡️']
+
+        while True:
+            try:
+                reaction, user = await client.wait_for('reaction_add', timeout=60.0, check=check)
+                
+                if str(reaction.emoji) == '➡️' and pagina_atual < total_paginas - 1:
+                    pagina_atual += 1
+                elif str(reaction.emoji) == '⬅️' and pagina_atual > 0:
+                    pagina_atual -= 1
+                
+                await mensagem.edit(embed=criar_embed(pagina_atual))
+                try:
+                    await reaction.remove(user)
+                except discord.errors.Forbidden:
+                    pass  # Ignora erro de permissão
+                
+            except asyncio.TimeoutError:
+                try:
+                    await mensagem.clear_reactions()
+                except discord.errors.Forbidden:
+                    pass
+                break
 
 # Remove Item
 @client.command(name='descartar', aliases=['remover', 'lixeira', 'jogarfora', 'Descartar'])
@@ -281,7 +458,7 @@ async def cor(ctx, cor: str, aposta_id: int):
     aposta = crud.fetch_aposta(aposta_id)
 
     if ctx.author.id == aposta[2] or ctx.author.id == aposta[4]:
-        if aposta[6] == 2:
+        if aposta[8] == 2:
                 if cor in cores:
                     if ctx.author.id == aposta[2]:            
                         resultado = crud.setcolor(cor, aposta_id, 1)
@@ -356,6 +533,44 @@ async def deposit(ctx, user_id, n):
         credits = crud.deposit(user_id, n)
         if credits:
             await ctx.send("command exec")
+
+
+@client.command(name="enigma", aliases=["enigmatas", "Enigma"])
+async def enigma(ctx):
+    primeiro_lugar_id = 285508502057779200
+    segundo_lugar_id = 567404024853299226 
+
+    primeiro_lugar = await client.fetch_user(primeiro_lugar_id)
+    segundo_lugar = await client.fetch_user(segundo_lugar_id)
+
+    embed = discord.Embed(
+        title="🏆 Pódio do Enigma do Baú",
+        description="**Estes são os únicos que decifraram o mistério:**",
+        color=0xFFD700 
+    )
+
+    embed.add_field(
+        name="🥇 1º Lugar - O Mestre dos Enigmas",
+        value=f"👑 **{primeiro_lugar.display_name}**\n*'O Homem Mais Inteligente do Universo'*",
+        inline=False
+    )
+    embed.set_thumbnail(url=primeiro_lugar.avatar.url)
+
+    embed.add_field(
+        name="🥈 2º Lugar - O Gênio Incompreendido",
+        value=f"🔮 **{segundo_lugar.display_name}**\n*'O Segundo Homem Mais Inteligente do Universo'*",
+        inline=False
+    )
+
+    embed.add_field(
+        name="🥉 3º Lugar - Vago",
+        value="*Este lugar aguarda o próximo gênio...*",
+        inline=False
+    )
+
+    embed.set_footer(text="Será que alguém mais conseguirá resolver o próximo enigma?")
+
+    await ctx.send(embed=embed)
 
 #@client.command(name="eventoaleatorio", aliases=["randomevent", "event", "evento"])
 #async def eventoaleatorio(ctx):
