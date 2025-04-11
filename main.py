@@ -1,4 +1,6 @@
 import asyncio
+import os
+from datetime import datetime
 import discord
 from discord.ext import commands
 from mykey import mykey
@@ -9,11 +11,13 @@ intents.message_content = True
 
 client = commands.Bot(command_prefix='!', intents=intents, help_command=None)
 
-
 # Verify if bot is working
 @client.event
 async def on_ready():
-    print('Bot is working. Last update -> 24/03/2025 - 16:32')
+    last_modified = os.path.getmtime(__file__)  # __file__ pega o caminho deste arquivo
+    last_update = datetime.fromtimestamp(last_modified).strftime("%d/%m/%Y - %H:%M")
+    
+    print(f'Bot is working. Last update -> {last_update}')
 
 
 # Sending hello
